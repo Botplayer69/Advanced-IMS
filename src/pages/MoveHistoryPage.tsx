@@ -1,3 +1,5 @@
+import { ProfileMenu } from "@/components/ProfileMenu";
+
 const moveHistory = [
   { id: "MOV-001", date: "Oct 24, 14:32", product: "Industrial Sensor Pro X", sku: "SNS-992-B", from: "WH-A / Zone 3", to: "WH-B / Zone 1", qty: 12, user: "J. Carter" },
   { id: "MOV-002", date: "Oct 24, 11:15", product: "PCB Board Rev.4", sku: "PCB-004-A", from: "WH-A / Zone 1", to: "WH-A / Zone 4", qty: 50, user: "M. Chen" },
@@ -10,10 +12,11 @@ const moveHistory = [
 export default function MoveHistoryPage() {
   return (
     <>
-      <header className="h-14 border-b border-border flex items-center px-8">
+      <header className="h-14 border-b border-border flex items-center justify-between px-8">
         <span className="text-sm text-muted-foreground">
           Operations / <span className="text-foreground font-medium">Move History</span>
         </span>
+        <ProfileMenu />
       </header>
 
       <div className="flex-1 overflow-y-auto p-8">

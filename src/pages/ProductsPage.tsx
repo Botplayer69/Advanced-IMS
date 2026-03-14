@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 const products = [
   { id: 1, name: "Industrial Sensor Pro X", sku: "SNS-992-B", category: "Sensors", stock: 147, min: 20, price: 89.5, status: "In Stock" },
@@ -27,15 +28,18 @@ export default function ProductsPage() {
     <>
       <header className="h-14 border-b border-border flex items-center justify-between px-8">
         <span className="text-sm font-medium text-muted-foreground">Products</span>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search SKU or product..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-card border border-border rounded pl-8 pr-3 py-1 text-xs w-64 focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search SKU or product..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-card border border-border rounded pl-8 pr-3 py-1 text-xs w-64 focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <ProfileMenu />
         </div>
       </header>
 

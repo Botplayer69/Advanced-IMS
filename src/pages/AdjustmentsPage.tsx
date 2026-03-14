@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 const products = [
   { name: "Industrial Sensor Pro X", sku: "SNS-992-B", currentStock: 147 },
@@ -37,12 +38,15 @@ export default function AdjustmentsPage() {
         <span className="text-sm text-muted-foreground">
           Operations / <span className="text-foreground font-medium">Inventory Adjustment</span>
         </span>
-        <button
-          onClick={handleSubmit}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-1.5 rounded font-bold text-sm ims-press"
-        >
-          SUBMIT ADJUSTMENTS
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSubmit}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-1.5 rounded font-bold text-sm ims-press"
+          >
+            SUBMIT ADJUSTMENTS
+          </button>
+          <ProfileMenu />
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-8">

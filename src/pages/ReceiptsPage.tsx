@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 const sampleReceipts = [
   {
@@ -49,10 +50,11 @@ export default function ReceiptsPage() {
 
   return (
     <>
-      <header className="h-14 border-b border-border flex items-center px-8">
+      <header className="h-14 border-b border-border flex items-center justify-between px-8">
         <span className="text-sm text-muted-foreground">
           Operations / <span className="text-foreground font-medium">Receipts</span>
         </span>
+        <ProfileMenu />
       </header>
 
       <div className="flex-1 flex overflow-hidden">

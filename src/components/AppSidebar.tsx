@@ -1,36 +1,54 @@
 import {
-  LayoutDashboard,
-  Package,
-  ClipboardList,
-  Truck,
   ArrowLeftRight,
+  ClipboardList,
   History,
-  Settings,
+  LayoutDashboard,
   Menu,
+  Package,
+  Settings,
+  Truck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { userRole } from "@/lib/rbac";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
 
-const mainLinks = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Products", url: "/products", icon: Package },
-];
+type SidebarLinkItem = {
+  title: string;
+  url: string;
+  icon: React.ElementType;
+};
 
-const operationsLinks = [
-  { title: "Receipts", url: "/operations/receipts", icon: ClipboardList },
-  { title: "Delivery Orders", url: "/operations/delivery-orders", icon: Truck },
-  { title: "Inventory Adjustment", url: "/operations/adjustments", icon: ArrowLeftRight },
-  { title: "Move History", url: "/operations/move-history", icon: History },
-];
+const managerLinks = {
+  main: [
+    { title: "Dashboard", url: "/", icon: LayoutDashboard },
+    { title: "Products", url: "/products", icon: Package },
+  ] satisfies SidebarLinkItem[],
+  operations: [
+    { title: "Receipts", url: "/operations/receipts", icon: ClipboardList },
+    { title: "Delivery Orders", url: "/operations/delivery-orders", icon: Truck },
+    { title: "Inventory Adjustment", url: "/operations/adjustments", icon: ArrowLeftRight },
+    { title: "Move History", url: "/operations/move-history", icon: History },
+  ] satisfies SidebarLinkItem[],
+  bottom: [{ title: "Settings", url: "/settings", icon: Settings }] satisfies SidebarLinkItem[],
+};
 
-const bottomLinks = [
-  { title: "Settings", url: "/settings", icon: Settings },
-];
+const staffLinks = {
+  main: [{ title: "Dashboard", url: "/", icon: LayoutDashboard }] satisfies SidebarLinkItem[],
+  operations: [
+    { title: "Internal Transfers", url: "/operations/internal-transfers", icon: ArrowLeftRight },
+    { title: "Pending Picks", url: "/operations/delivery-orders", icon: Truck },
+    { title: "Stock Adjustments", url: "/operations/adjustments", icon: ClipboardList },
+  ] satisfies SidebarLinkItem[],
+  bottom: [] satisfies SidebarLinkItem[],
+};
 
 export function AppSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+
+  // RBAC: Wrap sidebar data source with if role == manager vs if role == staff.
+  const links = userRole === "Inventory Manager" ? managerLinks : staffLinks;
 
   return (
     <aside
@@ -54,7 +72,7 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex-1 px-2 py-3 space-y-1 overflow-hidden">
-        {mainLinks.map((item) => (
+        {links.main.map((item) => (
           <SidebarLink key={item.url} item={item} collapsed={collapsed} currentPath={location.pathname} />
         ))}
 
@@ -67,16 +85,18 @@ export function AppSidebar() {
           {collapsed && <div className="border-t border-border" />}
         </div>
 
-        {operationsLinks.map((item) => (
+        {links.operations.map((item) => (
           <SidebarLink key={item.url} item={item} collapsed={collapsed} currentPath={location.pathname} />
         ))}
       </nav>
 
-      <div className="px-2 pb-3 space-y-1 border-t border-border pt-3">
-        {bottomLinks.map((item) => (
-          <SidebarLink key={item.url} item={item} collapsed={collapsed} currentPath={location.pathname} />
-        ))}
-      </div>
+      {links.bottom.length > 0 && (
+        <div className="px-2 pb-3 space-y-1 border-t border-border pt-3">
+          {links.bottom.map((item) => (
+            <SidebarLink key={item.url} item={item} collapsed={collapsed} currentPath={location.pathname} />
+          ))}
+        </div>
+      )}
     </aside>
   );
 }
@@ -86,7 +106,7 @@ function SidebarLink({
   collapsed,
   currentPath,
 }: {
-  item: { title: string; url: string; icon: React.ElementType };
+  item: SidebarLinkItem;
   collapsed: boolean;
   currentPath: string;
 }) {

@@ -1,8 +1,11 @@
+import { ProfileMenu } from "@/components/ProfileMenu";
+
 export default function SettingsPage() {
   return (
     <>
-      <header className="h-14 border-b border-border flex items-center px-8">
+      <header className="h-14 border-b border-border flex items-center justify-between px-8">
         <span className="text-sm font-medium text-muted-foreground">Settings</span>
+        <ProfileMenu />
       </header>
 
       <div className="flex-1 overflow-y-auto p-8 max-w-2xl space-y-8">
