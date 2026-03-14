@@ -10,6 +10,8 @@
   Truck,
   UserRound,
   Warehouse,
+  ArrowDownLeft,
+  Database,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -41,6 +43,7 @@ const managerOperationLinks: LinkItem[] = [
   { title: "Receipts", url: "/operations/receipts", icon: Warehouse },
   { title: "Delivery Orders", url: "/operations/delivery-orders", icon: Truck },
   { title: "Inventory Adjustment", url: "/operations/adjustments", icon: ArrowLeftRight },
+  { title: "Binary Pipeline", url: "/operations/binary-demo", icon: Database },
   { title: "Move History", url: "/operations/move-history", icon: History },
 ];
 
@@ -151,9 +154,8 @@ function SidebarProfileMenu({ collapsed }: { collapsed: boolean }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className={`w-full flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-left ims-hover ${
-            collapsed ? "justify-center px-1" : ""
-          }`}
+          className={`w-full flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-left ims-hover ${collapsed ? "justify-center px-1" : ""
+            }`}
         >
           <Avatar className="h-7 w-7 border border-border">
             <AvatarImage src="https://api.dicebear.com/9.x/adventurer/svg?seed=Arham-Bhansali" alt={accountName} />
@@ -164,11 +166,11 @@ function SidebarProfileMenu({ collapsed }: { collapsed: boolean }) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem onSelect={() => toast.info("My profile clicked")}> 
+        <DropdownMenuItem onSelect={() => toast.info("My profile clicked")}>
           <UserRound className="h-4 w-4" />
           My profile
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => toast.info("Signout clicked")}> 
+        <DropdownMenuItem onSelect={() => toast.info("Signout clicked")}>
           <LogOut className="h-4 w-4" />
           Signout
         </DropdownMenuItem>
@@ -193,9 +195,8 @@ function SidebarLink({
     <NavLink
       to={item.url}
       end={item.url === "/"}
-      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium ims-hover ${
-        isActive ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-muted hover:text-sidebar-foreground"
-      } ${collapsed ? "justify-center px-2" : ""}`}
+      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium ims-hover ${isActive ? "bg-sidebar-accent text-sidebar-foreground" : "text-sidebar-muted hover:text-sidebar-foreground"
+        } ${collapsed ? "justify-center px-2" : ""}`}
       activeClassName=""
     >
       {ItemIcon && <ItemIcon className="h-4 w-4 shrink-0" />}
@@ -210,9 +211,8 @@ function SidebarSubLink({ item, currentPath }: { item: LinkItem; currentPath: st
   return (
     <NavLink
       to={item.url}
-      className={`block rounded px-2 py-1.5 text-xs font-medium ${
-        isActive ? "text-sidebar-foreground bg-sidebar-accent" : "text-sidebar-muted hover:text-sidebar-foreground"
-      }`}
+      className={`block rounded px-2 py-1.5 text-xs font-medium ${isActive ? "text-sidebar-foreground bg-sidebar-accent" : "text-sidebar-muted hover:text-sidebar-foreground"
+        }`}
       activeClassName=""
     >
       {item.title}
