@@ -1,27 +1,51 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
-
-const products = [
-  { id: 1, name: "Industrial Sensor Pro X", sku: "SNS-992-B", category: "Sensors", stock: 147, min: 20, price: 89.5, status: "In Stock" },
-  { id: 2, name: "Servo Motor A12", sku: "SRV-A12-C", category: "Motors", stock: 52, min: 15, price: 245.0, status: "In Stock" },
-  { id: 3, name: "Hydraulic Pump HP-200", sku: "HYD-200-A", category: "Pumps", stock: 2, min: 10, price: 1200.0, status: "Low Stock" },
-  { id: 4, name: "Bearing Assembly BA-44", sku: "BRG-044-C", category: "Parts", stock: 0, min: 25, price: 34.75, status: "Out of Stock" },
-  { id: 5, name: "Cable Harness CX-90", sku: "CBL-090-D", category: "Cables", stock: 340, min: 50, price: 12.3, status: "In Stock" },
-  { id: 6, name: "PCB Board Rev.4", sku: "PCB-004-A", category: "Electronics", stock: 820, min: 100, price: 7.85, status: "In Stock" },
-  { id: 7, name: "Thermal Paste TG-7", sku: "THP-007-B", category: "Consumables", stock: 195, min: 30, price: 4.5, status: "In Stock" },
-  { id: 8, name: "Cooling Fan 120mm", sku: "FAN-120-E", category: "Cooling", stock: 8, min: 20, price: 15.99, status: "Low Stock" },
-  { id: 9, name: "O-Ring Kit ORK-15", sku: "ORK-015-B", category: "Parts", stock: 5, min: 50, price: 22.0, status: "Low Stock" },
-  { id: 10, name: "Pressure Gauge PG-100", sku: "PRG-100-D", category: "Instruments", stock: 1, min: 8, price: 67.0, status: "Low Stock" },
-];
+import { getProducts, type ProductDto } from "@/lib/api/masterData";
+import { getStockSummary } from "@/lib/api/stock";
+import { toast } from "sonner";
 
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<ProductDto[]>([]);
+  const [stockByProduct, setStockByProduct] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        const [productRows, stockRows] = await Promise.all([getProducts(), getStockSummary()]);
+        if (!mounted) return;
+
+        setProducts(productRows);
+        const stockMap = stockRows.reduce<Record<string, number>>((acc, row) => {
+          acc[row.productId] = row.quantity;
+          return acc;
+        }, {});
+        setStockByProduct(stockMap);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to load products.";
+        toast.error(message);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [products, search]);
 
   return (
     <>
@@ -54,28 +78,42 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="text-sm">
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="py-8 px-4 text-center text-muted-foreground">
+                    Loading products...
+                  </td>
+                </tr>
+              )}
+
+              {!loading && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="py-8 px-4 text-center text-muted-foreground">
+                    No products found.
+                  </td>
+                </tr>
+              )}
+
               {filtered.map((p) => (
                 <tr
-                  key={p.id}
+                  key={String(p.id)}
                   className="border-b border-border/50 hover:bg-accent/30 ims-hover"
                 >
                   <td className="py-3 px-4 font-medium">{p.name}</td>
                   <td className="py-3 px-4 font-mono text-xs text-muted-foreground">{p.sku}</td>
-                  <td className="py-3 px-4 text-xs text-muted-foreground">{p.category}</td>
-                  <td className="py-3 px-4 text-right font-mono">{p.stock}</td>
-                  <td className="py-3 px-4 text-right font-mono text-muted-foreground">{p.min}</td>
-                  <td className="py-3 px-4 text-right font-mono">${p.price.toFixed(2)}</td>
+                  <td className="py-3 px-4 text-xs text-muted-foreground">{p.categoryName ?? "Uncategorized"}</td>
+                  <td className="py-3 px-4 text-right font-mono">{stockByProduct[p.id] ?? p.initialStock ?? 0}</td>
+                  <td className="py-3 px-4 text-right font-mono text-muted-foreground">-</td>
+                  <td className="py-3 px-4 text-right font-mono">-</td>
                   <td className="py-3 px-4 text-right">
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${
-                        p.status === "In Stock"
+                        (stockByProduct[p.id] ?? p.initialStock ?? 0) > 0
                           ? "bg-success/10 text-success border-success/20"
-                          : p.status === "Low Stock"
-                          ? "bg-warning/10 text-warning border-warning/20"
                           : "bg-destructive/10 text-destructive border-destructive/20"
                       }`}
                     >
-                      {p.status}
+                      {(stockByProduct[p.id] ?? p.initialStock ?? 0) > 0 ? "In Stock" : "Out of Stock"}
                     </span>
                   </td>
                 </tr>

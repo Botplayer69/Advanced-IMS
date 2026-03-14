@@ -1,4 +1,8 @@
 ﻿import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { createDocument, validateReceipt } from "@/lib/api/documents";
+import { getProducts, getWarehouses, type ProductDto, type WarehouseDto } from "@/lib/api/masterData";
+import { useEffect } from "react";
 
 type ReceiptLine = {
   id: string;
@@ -6,24 +10,82 @@ type ReceiptLine = {
   quantityReceived: number;
 };
 
-const productOptions = [
-  { id: "SRV-A12-C", label: "Servo Motor A12 (SRV-A12-C)" },
-  { id: "SNS-992-B", label: "Industrial Sensor Pro X (SNS-992-B)" },
-  { id: "PCB-004-A", label: "PCB Board Rev.4 (PCB-004-A)" },
-  { id: "FAN-120-E", label: "Cooling Fan 120mm (FAN-120-E)" },
-];
-
 export default function ReceiptsPage() {
   const [supplier, setSupplier] = useState("");
   const [receiptDate, setReceiptDate] = useState("");
+  const [warehouseId, setWarehouseId] = useState("");
   const [lines, setLines] = useState<ReceiptLine[]>([]);
+  const [products, setProducts] = useState<ProductDto[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseDto[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([getProducts(), getWarehouses()])
+      .then(([productRows, warehouseRows]) => {
+        if (!mounted) return;
+        setProducts(productRows);
+        setWarehouses(warehouseRows);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Failed to load products/warehouses.";
+        toast.error(message);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const selectedProducts = useMemo(() => new Set(lines.map((line) => line.productId).filter(Boolean)), [lines]);
 
   const handleCreateReceipt = () => {
     setSupplier("");
     setReceiptDate("");
+    setWarehouseId("");
     setLines([{ id: crypto.randomUUID(), productId: "", quantityReceived: 0 }]);
+  };
+
+  const handleSaveReceipt = async () => {
+    if (!supplier || !receiptDate || !warehouseId) {
+      toast.error("Supplier, receipt date, and warehouse are required.");
+      return;
+    }
+
+    const validLines = lines.filter((line) => line.productId && line.quantityReceived > 0);
+    if (validLines.length === 0) {
+      toast.error("Add at least one product line with quantity > 0.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const operation = await createDocument(
+        "RECEIPT",
+        undefined,
+        undefined,
+        warehouseId,
+        supplier,
+        validLines.map((line) => ({ productId: line.productId, quantity: line.quantityReceived }))
+      );
+
+      await validateReceipt(
+        operation.id,
+        validLines.map((line) => ({
+          productId: line.productId,
+          warehouseId,
+          quantity: line.quantityReceived,
+        }))
+      );
+
+      toast.success("Receipt saved and inventory updated.");
+      handleCreateReceipt();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save receipt.";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addLine = () => {
@@ -85,6 +147,22 @@ export default function ReceiptsPage() {
                 className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Destination Warehouse</label>
+              <select
+                value={warehouseId}
+                onChange={(e) => setWarehouseId(e.target.value)}
+                className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="">Select warehouse</option>
+                {warehouses.map((wh) => (
+                  <option key={wh.id} value={wh.id}>
+                    {wh.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -126,11 +204,11 @@ export default function ReceiptsPage() {
                           className="w-full bg-background border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                         >
                           <option value="">Select product</option>
-                          {productOptions.map((product) => {
+                          {products.map((product) => {
                             const alreadyChosen = selectedProducts.has(product.id) && product.id !== line.productId;
                             return (
                               <option key={product.id} value={product.id} disabled={alreadyChosen}>
-                                {product.label}
+                                {product.name} ({product.sku})
                               </option>
                             );
                           })}
@@ -165,8 +243,13 @@ export default function ReceiptsPage() {
             <button type="button" className="px-4 py-2 rounded border border-border text-sm hover:bg-accent/40 ims-press">
               Cancel
             </button>
-            <button type="button" className="px-4 py-2 rounded bg-success text-success-foreground text-sm font-semibold hover:bg-success/90 ims-press">
-              Save Receipt
+            <button
+              type="button"
+              disabled={saving}
+              onClick={handleSaveReceipt}
+              className="px-4 py-2 rounded bg-success text-success-foreground text-sm font-semibold hover:bg-success/90 ims-press disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save Receipt"}
             </button>
           </div>
         </section>

@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { userRole } from "@/lib/rbac";
+import { createProduct, getCategories, type CategoryDto } from "@/lib/api/masterData";
+import { toast } from "sonner";
 
 export default function ProductCreateUpdatePage() {
   const [formData, setFormData] = useState({
@@ -8,8 +10,59 @@ export default function ProductCreateUpdatePage() {
     category: "",
     unitOfMeasure: "",
   });
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const isManager = userRole === "Inventory Manager";
+
+  useEffect(() => {
+    let mounted = true;
+    getCategories()
+      .then((rows) => {
+        if (mounted) setCategories(rows);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Failed to load categories.";
+        toast.error(message);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const resetForm = () => {
+    setFormData({
+      productName: "",
+      sku: "",
+      category: "",
+      unitOfMeasure: "",
+    });
+  };
+
+  const handleSave = async () => {
+    if (!formData.productName || !formData.sku || !formData.category || !formData.unitOfMeasure) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await createProduct({
+        name: formData.productName,
+        sku: formData.sku,
+        categoryId: formData.category,
+        uom: formData.unitOfMeasure,
+        initialStock: 0,
+      });
+      toast.success("Product saved to database.");
+      resetForm();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save product.";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!isManager) {
     return (
@@ -70,10 +123,11 @@ export default function ProductCreateUpdatePage() {
                 className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 <option value="">Select category</option>
-                <option value="motors">Motors</option>
-                <option value="sensors">Sensors</option>
-                <option value="electronics">Electronics</option>
-                <option value="consumables">Consumables</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -94,11 +148,18 @@ export default function ProductCreateUpdatePage() {
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <button className="px-4 py-2 rounded border border-border text-sm hover:bg-accent/40 ims-press">
+            <button
+              onClick={resetForm}
+              className="px-4 py-2 rounded border border-border text-sm hover:bg-accent/40 ims-press"
+            >
               Cancel
             </button>
-            <button className="px-4 py-2 rounded bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 ims-press">
-              Save Product
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 ims-press disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save Product"}
             </button>
           </div>
         </section>
