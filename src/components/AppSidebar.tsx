@@ -16,8 +16,8 @@ import { toast } from "sonner";
 import { NavLink } from "@/components/NavLink";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { userRole } from "@/lib/rbac";
-import { useLocation } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type LinkItem = {
   title: string;
@@ -52,10 +52,11 @@ const staffOperationLinks: LinkItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [productsOpen, setProductsOpen] = useState(true);
 
-  const isManager = userRole === "Inventory Manager";
+  const isManager = user?.role === "Inventory Manager";
 
   const visibleProductLinks = useMemo(
     () => productSubLinks.filter((link) => isManager || !link.managerOnly),
@@ -144,7 +145,20 @@ export function AppSidebar() {
 }
 
 function SidebarProfileMenu({ collapsed }: { collapsed: boolean }) {
-  const accountName = "Arham Bhansali";
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const accountName = user?.displayName ?? "User";
+  const initials = accountName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleSignout = () => {
+    signOut();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <DropdownMenu>
@@ -155,8 +169,8 @@ function SidebarProfileMenu({ collapsed }: { collapsed: boolean }) {
             }`}
         >
           <Avatar className="h-7 w-7 border border-border">
-            <AvatarImage src="https://api.dicebear.com/9.x/adventurer/svg?seed=Arham-Bhansali" alt={accountName} />
-            <AvatarFallback className="text-[10px] font-bold">AB</AvatarFallback>
+            <AvatarImage src="https://api.dicebear.com/9.x/adventurer/svg?seed=Advanced-IMS" alt={accountName} />
+            <AvatarFallback className="text-[10px] font-bold">{initials}</AvatarFallback>
           </Avatar>
           {!collapsed && <span className="text-xs font-medium text-foreground">{accountName}</span>}
         </button>
@@ -167,7 +181,7 @@ function SidebarProfileMenu({ collapsed }: { collapsed: boolean }) {
           <UserRound className="h-4 w-4" />
           My profile
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => toast.info("Signout clicked")}>
+        <DropdownMenuItem onSelect={handleSignout}>
           <LogOut className="h-4 w-4" />
           Signout
         </DropdownMenuItem>

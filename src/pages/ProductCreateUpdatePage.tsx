@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { userRole } from "@/lib/rbac";
+import { useAuth } from "@/lib/auth";
 import { createProduct, getCategories, type CategoryDto } from "@/lib/api/masterData";
 import { toast } from "sonner";
 
 export default function ProductCreateUpdatePage() {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     productName: "",
     sku: "",
@@ -13,7 +14,7 @@ export default function ProductCreateUpdatePage() {
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const isManager = userRole === "Inventory Manager";
+  const isManager = user?.role === "Inventory Manager";
 
   useEffect(() => {
     let mounted = true;

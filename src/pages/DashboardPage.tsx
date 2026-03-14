@@ -13,7 +13,7 @@
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { userRole } from "@/lib/rbac";
+import { useAuth } from "@/lib/auth";
 
 const managerKpiData = [
   {
@@ -144,12 +144,13 @@ const managerLowStockItems = [
 ];
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [warehouseFilter, setWarehouseFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const isManager = userRole === "Inventory Manager";
+  const isManager = user?.role === "Inventory Manager";
 
   const filteredManagerActivity = useMemo(() => {
     return managerRecentActivity.filter((a) => {
@@ -190,7 +191,7 @@ export default function DashboardPage() {
                 : "border-warning/30 text-warning bg-warning/10"
             }`}
           >
-            Role: {userRole}
+            Role: {user?.role ?? "Unknown"}
           </span>
 
           <select

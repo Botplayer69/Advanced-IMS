@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { userRole } from "@/lib/rbac";
+import { useAuth } from "@/lib/auth";
 import {
   createCategory,
   deleteCategory,
@@ -13,13 +13,14 @@ import {
 } from "@/lib/api/masterData";
 
 export default function ProductCategoriesPage() {
+  const { user } = useAuth();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [products, setProducts] = useState<ProductDto[]>([]);
   const [categoryName, setCategoryName] = useState("");
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const isManager = userRole === "Inventory Manager";
+  const isManager = user?.role === "Inventory Manager";
 
   useEffect(() => {
     let mounted = true;
