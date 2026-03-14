@@ -10,8 +10,6 @@
   Truck,
   UserRound,
   Warehouse,
-  ArrowDownLeft,
-  Database,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -43,7 +41,6 @@ const managerOperationLinks: LinkItem[] = [
   { title: "Receipts", url: "/operations/receipts", icon: Warehouse },
   { title: "Delivery Orders", url: "/operations/delivery-orders", icon: Truck },
   { title: "Inventory Adjustment", url: "/operations/adjustments", icon: ArrowLeftRight },
-  { title: "Binary Pipeline", url: "/operations/binary-demo", icon: Database },
   { title: "Move History", url: "/operations/move-history", icon: History },
 ];
 

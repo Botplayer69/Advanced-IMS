@@ -13,7 +13,6 @@ import ReorderingRulesPage from "./pages/ReorderingRulesPage";
 import DeliveryOrdersPage from "./pages/DeliveryOrdersPage";
 import ReceiptsPage from "./pages/ReceiptsPage";
 import StockReceipt from "./pages/StockReceipt";
-import BinaryDemoPage from "./pages/BinaryDemoPage";
 import AdjustmentsPage from "./pages/AdjustmentsPage";
 import MoveHistoryPage from "./pages/MoveHistoryPage";
 import InternalTransfersPage from "./pages/InternalTransfersPage";
@@ -73,7 +72,6 @@ const App = () => (
               path="/operations/adjustments"
               element={withRoleAccess("/operations/adjustments", <AdjustmentsPage />)}
             />
-            <Route path="/operations/binary-demo" element={<BinaryDemoPage />} />
             <Route
               path="/operations/move-history"
               element={withRoleAccess("/operations/move-history", <MoveHistoryPage />)}
