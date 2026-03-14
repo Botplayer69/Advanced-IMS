@@ -1,4 +1,4 @@
-export type UserRole = "Inventory Manager" | "Warehouse Staff";
+﻿export type UserRole = "Inventory Manager" | "Warehouse Staff";
 
 // Replace this with backend/session injected role during integration.
 export const userRole: UserRole = "Inventory Manager";
@@ -7,17 +7,26 @@ const roleRouteAccess: Record<UserRole, string[]> = {
   "Inventory Manager": [
     "/",
     "/products",
+    "/products/create-update",
+    "/products/availability",
+    "/products/categories",
+    "/products/reordering-rules",
     "/operations/receipts",
     "/operations/delivery-orders",
     "/operations/adjustments",
     "/operations/move-history",
+    "/operations/internal-transfers",
     "/settings",
   ],
   "Warehouse Staff": [
     "/",
-    "/operations/internal-transfers",
+    "/products/availability",
+    "/products/categories",
+    "/products/reordering-rules",
+    "/operations/receipts",
     "/operations/delivery-orders",
     "/operations/adjustments",
+    "/operations/internal-transfers",
   ],
 };
 

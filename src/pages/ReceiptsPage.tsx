@@ -1,139 +1,174 @@
-import { useState } from "react";
-import { toast } from "@/components/ui/sonner";
+﻿import { useMemo, useState } from "react";
 
-const sampleReceipts = [
-  {
-    id: "WH/IN/04521",
-    vendor: "Siemens Industrial",
-    scheduled: "Oct 25, 09:00",
-    status: "Pending" as const,
-    lines: [
-      { product: "Servo Motor A12", sku: "SRV-A12-C", expected: 50, received: 50 },
-      { product: "Pressure Gauge PG-100", sku: "PRG-100-D", expected: 20, received: 18 },
-    ],
-  },
-  {
-    id: "WH/IN/04520",
-    vendor: "Molex Components",
-    scheduled: "Oct 24, 14:00",
-    status: "Validated" as const,
-    lines: [
-      { product: "PCB Board Rev.4", sku: "PCB-004-A", expected: 200, received: 200 },
-    ],
-  },
-  {
-    id: "WH/IN/04519",
-    vendor: "Parker Hannifin",
-    scheduled: "Oct 24, 08:00",
-    status: "Pending" as const,
-    lines: [
-      { product: "Hydraulic Pump HP-200", sku: "HYD-200-A", expected: 10, received: 0 },
-      { product: "O-Ring Kit ORK-15", sku: "ORK-015-B", expected: 100, received: 100 },
-    ],
-  },
+type ReceiptLine = {
+  id: string;
+  productId: string;
+  quantityReceived: number;
+};
+
+const productOptions = [
+  { id: "SRV-A12-C", label: "Servo Motor A12 (SRV-A12-C)" },
+  { id: "SNS-992-B", label: "Industrial Sensor Pro X (SNS-992-B)" },
+  { id: "PCB-004-A", label: "PCB Board Rev.4 (PCB-004-A)" },
+  { id: "FAN-120-E", label: "Cooling Fan 120mm (FAN-120-E)" },
 ];
 
 export default function ReceiptsPage() {
-  const [documents, setDocuments] = useState(sampleReceipts);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [supplier, setSupplier] = useState("");
+  const [receiptDate, setReceiptDate] = useState("");
+  const [lines, setLines] = useState<ReceiptLine[]>([]);
 
-  const selected = documents.find((d) => d.id === selectedId);
+  const selectedProducts = useMemo(() => new Set(lines.map((line) => line.productId).filter(Boolean)), [lines]);
 
-  const handleValidate = () => {
-    if (!selected) return;
-    setDocuments((prev) =>
-      prev.map((d) => (d.id === selected.id ? { ...d, status: "Validated" as const } : d))
+  const handleCreateReceipt = () => {
+    setSupplier("");
+    setReceiptDate("");
+    setLines([{ id: crypto.randomUUID(), productId: "", quantityReceived: 0 }]);
+  };
+
+  const addLine = () => {
+    setLines((prev) => [...prev, { id: crypto.randomUUID(), productId: "", quantityReceived: 0 }]);
+  };
+
+  const removeLine = (lineId: string) => {
+    setLines((prev) => prev.filter((line) => line.id !== lineId));
+  };
+
+  const updateLine = (lineId: string, field: "productId" | "quantityReceived", value: string) => {
+    setLines((prev) =>
+      prev.map((line) => {
+        if (line.id !== lineId) return line;
+
+        if (field === "quantityReceived") {
+          return { ...line, quantityReceived: Number(value || 0) };
+        }
+
+        return { ...line, productId: value };
+      }),
     );
-    toast.success(`${selected.id} receipt validated`);
   };
 
   return (
     <>
-      <header className="h-14 border-b border-border flex items-center px-8">
+      <header className="h-14 border-b border-border flex items-center justify-between px-8">
         <span className="text-sm text-muted-foreground">
           Operations / <span className="text-foreground font-medium">Receipts</span>
         </span>
+        <button
+          type="button"
+          onClick={handleCreateReceipt}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-1.5 rounded text-sm font-semibold ims-press"
+        >
+          Create New Receipt
+        </button>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        <section className="w-[380px] border-r border-border overflow-y-auto bg-card/30 shrink-0">
-          {documents.map((doc) => (
-            <div
-              key={doc.id}
-              onClick={() => setSelectedId(doc.id)}
-              className={`p-4 border-b border-border cursor-pointer ims-hover ${selectedId === doc.id ? "bg-accent/50" : "hover:bg-accent/20"
-                }`}
-            >
-              <div className="flex justify-between items-start mb-1">
-                <span className="font-mono text-xs font-bold text-primary">{doc.id}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${doc.status === "Pending"
-                      ? "bg-warning/10 text-warning border-warning/20"
-                      : "bg-success/10 text-success border-success/20"
-                    }`}
-                >
-                  {doc.status}
-                </span>
-              </div>
-              <div className="text-xs text-muted-foreground">Vendor: {doc.vendor}</div>
-              <div className="text-[10px] text-muted-foreground/50 mt-2">Scheduled: {doc.scheduled}</div>
+      <div className="flex-1 overflow-y-auto p-8">
+        <section className="max-w-5xl bg-card border border-border rounded-lg p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Supplier</label>
+              <input
+                type="text"
+                value={supplier}
+                onChange={(e) => setSupplier(e.target.value)}
+                placeholder="e.g. Siemens Industrial"
+                className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              />
             </div>
-          ))}
-        </section>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Receipt Date</label>
+              <input
+                type="date"
+                value={receiptDate}
+                onChange={(e) => setReceiptDate(e.target.value)}
+                className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
 
-        <section className="flex-1 flex flex-col bg-background overflow-y-auto">
-          {selected ? (
-            <>
-              <div className="p-8 flex justify-between items-center border-b border-border sticky top-0 bg-background z-10">
-                <div>
-                  <h1 className="text-2xl font-bold tracking-tight">{selected.id}</h1>
-                  <p className="text-sm text-muted-foreground">{selected.vendor} • {selected.scheduled}</p>
-                </div>
-                {selected.status === "Pending" ? (
-                  <button onClick={handleValidate} className="bg-success hover:bg-success/90 text-success-foreground px-6 py-2 rounded font-bold text-sm ims-press shadow-[0_0_20px_rgba(34,197,94,0.2)]">
-                    VALIDATE RECEIPT
-                  </button>
-                ) : (
-                  <span className="text-success font-bold text-sm">● Validated</span>
-                )}
-              </div>
-              <div className="p-8">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-bold">
-                      <th className="pb-4 px-2">Product</th>
-                      <th className="pb-4 px-2 w-32">Expected</th>
-                      <th className="pb-4 px-2 w-32">Received</th>
-                      <th className="pb-4 px-2 w-24 text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {selected.lines.map((line, i) => (
-                      <tr key={i} className="border-b border-border/50 hover:bg-accent/20 ims-hover">
-                        <td className="py-4 px-2">
-                          <div className="font-medium">{line.product}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">{line.sku}</div>
-                        </td>
-                        <td className="py-4 px-2 font-mono text-muted-foreground">{line.expected}</td>
-                        <td className="py-4 px-2 font-mono">{line.received}</td>
-                        <td className="py-4 px-2 text-right">
-                          {line.received >= line.expected ? (
-                            <span className="text-success text-[10px] font-medium">● Complete</span>
-                          ) : (
-                            <span className="text-warning text-[10px] font-medium">● Partial</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">Select a receipt to begin processing.</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold">Products in Receipt</h2>
+              <button
+                type="button"
+                onClick={addLine}
+                className="px-3 py-1.5 rounded border border-border text-xs font-semibold hover:bg-accent/40 ims-press"
+              >
+                + Add Product Row
+              </button>
             </div>
-          )}
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-bold">
+                    <th className="py-3 px-4">Product</th>
+                    <th className="py-3 px-4 w-40 text-right">Quantities Received</th>
+                    <th className="py-3 px-4 w-24 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {lines.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="py-8 text-center text-muted-foreground">
+                        Click "Create New Receipt" to begin.
+                      </td>
+                    </tr>
+                  )}
+
+                  {lines.map((line) => (
+                    <tr key={line.id} className="border-b border-border/50 hover:bg-accent/20">
+                      <td className="py-3 px-4">
+                        <select
+                          value={line.productId}
+                          onChange={(e) => updateLine(line.id, "productId", e.target.value)}
+                          className="w-full bg-background border border-border rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="">Select product</option>
+                          {productOptions.map((product) => {
+                            const alreadyChosen = selectedProducts.has(product.id) && product.id !== line.productId;
+                            return (
+                              <option key={product.id} value={product.id} disabled={alreadyChosen}>
+                                {product.label}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <input
+                          type="number"
+                          min={0}
+                          value={line.quantityReceived}
+                          onChange={(e) => updateLine(line.id, "quantityReceived", e.target.value)}
+                          className="w-28 bg-background border border-border rounded px-2 py-1.5 text-sm font-mono text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => removeLine(line.id)}
+                          className="text-xs text-destructive hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3">
+            <button type="button" className="px-4 py-2 rounded border border-border text-sm hover:bg-accent/40 ims-press">
+              Cancel
+            </button>
+            <button type="button" className="px-4 py-2 rounded bg-success text-success-foreground text-sm font-semibold hover:bg-success/90 ims-press">
+              Save Receipt
+            </button>
+          </div>
         </section>
       </div>
     </>
